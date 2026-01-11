@@ -1,6 +1,8 @@
 <?php
 
 require __DIR__ . '/../config/autoload.php';
+
+session_save_path(ROOT . '/sessions');
 session_start();
 
 use Core\Router;
