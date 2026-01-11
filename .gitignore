@@ -1,0 +1,52 @@
+# Composer
+vendor/
+composer.lock
+composer.phar
+
+# Sessions
+sessions/*
+!sessions/.gitkeep
+
+# Uploads
+public/uploads/*
+!public/uploads/.gitkeep
+
+# Environment and Config
+.env
+.env.local
+.env.*.local
+config/database.php
+config/secrets.php
+
+# Logs
+*.log
+logs/
+
+# Cache
+cache/
+*.cache
+
+# IDE
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+.phpintel/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# PHP
+*.php~
+.phpunit.result.cache
+phpunit.xml

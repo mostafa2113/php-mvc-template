@@ -1,0 +1,7 @@
+{
+    "welcome": "Welcome to our application",
+    "home": "Home",
+    "about": "About Us",
+    "contact": "Contact",
+    "home_description": "This is a simple PHP MVC framework template."
+}
