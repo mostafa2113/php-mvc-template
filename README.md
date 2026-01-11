@@ -7,25 +7,27 @@ A lightweight, flexible PHP MVC framework with built-in multi-language support (
 ### Core Framework Features
 
 - **MVC Architecture**: Clean separation of concerns with Models, Views, and Controllers
-- **Flexible Routing System**: Pattern-based route matching with parameter extraction
+- **Flexible Routing System**: Pattern-based route matching with parameter extraction; merges route params with query params automatically
+- **Response Helpers**: Built-in `render()` for layouts/views, `JSONResponse()` for API endpoints, and `enableCORS()` to allow localhost origins
 - **PSR-4 Autoloading**: Proper namespace-based class autoloading via Composer
-- **Session Management**: Built-in session handling for state persistence
+- **Session Management**: Session path pre-configured to `sessions/` and started in the front controller
 
 ### Localization & Internationalization
 
 - **Multi-Language Support**: Out-of-the-box support for English and Arabic
-- **JSON-Based Translations**: Simple, maintainable translation files
+- **JSON-Based Translations**: Simple, maintainable translation files in `config/languages/`
 - **Session-Based Language Persistence**: User language preference is saved across sessions
-- **Automatic RTL/LTR Switching**: HTML direction attribute automatically set based on language
-- **Dynamic Language Switching**: Inline language switcher in the header
+- **Automatic RTL/LTR Switching**: Layout direction set from the active language
+- **Dynamic Language Switching**: Inline POST-based language switcher in the header (`/language/switch`)
 
 ### Developer Features
 
-- **Helper Functions**: Convenient utility functions for URLs, assets, and media
-- **Layout System**: Template inheritance with layout wrapper
-- **View Rendering**: Automatic view compilation with data extraction
+- **Helper Functions**: Convenient utility functions for URLs, assets, media, and redirects
+- **Layout System**: Template inheritance with layout wrapper; `{{content}}` replaced by view output
+- **View & Translation Helpers**: `render()` composes layout + view, `translate()` pulls keys from the active language file
+- **JSON & CORS Helpers**: `JSONResponse($data, $status)` and `enableCORS()` for API routes
 - **Environment Configuration**: Development/production environment settings with error handling
-- **Database Ready**: Pre-configured database connection constants (can be extended with ORM/Query Builder)
+- **Database Ready**: Base `Model` with PDO connection + prepared statements; sample `User` model implements create/update/find/authentication/validation
 
 ## Installation & Setup
 
@@ -140,35 +142,29 @@ Modify `public/index.php` to add new routes:
 $router->add('route-pattern', ['controller' => 'ControllerName', 'action' => 'methodName']);
 ```
 
-**Route Pattern Examples**:
+**Current routes**:
 
 ```php
-$router->add('', ['controller' => 'Home', 'action' => 'index']);           // Root URL
-$router->add('posts/{id}', ['controller' => 'Posts', 'action' => 'view']); // Dynamic segments
-$router->add('language/switch', ['controller' => 'Language', 'action' => 'switch']);
+$router->add('', ['controller' => 'Home', 'action' => 'index']);            // Root URL
+$router->add('language/switch', ['controller' => 'Language', 'action' => 'switch']); // POST language switcher
+$router->add('posts', ['controller' => 'Posts', 'action' => 'index']);      // JSON API example
+$router->add('posts/{id}', ['controller' => 'Posts', 'action' => 'view']);  // Dynamic segments
 ```
+
+Route params and query params are merged automatically before invoking the controller action.
 
 ### Adding Translations
 
-1. **Add translation keys** to `config/languages/en.json`:
+1. Add translation keys to `config/languages/en.json`, e.g.:
 
 ```json
 {
-  "home_title": "Welcome Home",
-  "nav_about": "About Us",
-  "footer_copyright": "All rights reserved"
+  "welcome": "Welcome to our application",
+  "home_description": "This is a simple PHP MVC framework template."
 }
 ```
 
-2. **Add same keys** to `config/languages/ar.json` with Arabic translations:
-
-```json
-{
-  "home_title": "أهلا بك في الصفحة الرئيسية",
-  "nav_about": "عن موقعنا",
-  "footer_copyright": "جميع الحقوق محفوظة"
-}
-```
+2. Add the same keys to `config/languages/ar.json` with Arabic translations.
 
 ## Usage Guide
 
@@ -210,61 +206,60 @@ $router->add('about', ['controller' => 'About', 'action' => 'index']);
 
 ### Creating a New Model
 
-Create `App/Models/Post.php`:
+- Extend `App\Models\Model` to gain the shared PDO connection and `query()` helper.
+- Example: add a `Post` model with table-specific queries.
 
-```php
-<?php
+### Using the Built-in `User` Model
 
-namespace App\Models;
+`App/Models/User.php` ships with common operations:
 
-class Post extends Model
-{
-    protected $table = 'posts';
-
-    public function getAllPosts()
-    {
-        // Add database queries here
-    }
-}
-```
+- `User::create($data)`: hashes password, timestamps, inserts, and returns the created user.
+- `$user->update($data)`: updates fields (rehashes password when provided).
+- `User::find($id)`, `User::findByEmail($email)`, `User::findByUsername($username)`
+- `User::authenticate($username, $password)`
+- `User::validate($data)`: lightweight input validation (username/email/password/full_name).
 
 ### Using Translations in Views
 
-In any view file, use the `translate()` method inherited from Controller:
+In any view file, use the `translate()` method inherited from `Controller`:
 
 ```php
-<h1><?= $this->translate('welcome_title') ?></h1>
-<p><?= $this->translate('welcome_message') ?></p>
+<h2><?= $this->translate('welcome') ?></h2>
+<p><?= $this->translate('home_description') ?></p>
 ```
 
 ### Using Helper Functions
 
-Global helper functions available throughout the application:
+Available globally via `config/Helper.php`:
 
 ```php
-// Generate full URL
-echo url('posts/5');                    // http://localhost:8000/posts/5
-
-// Asset URL (CSS, JS, images)
-echo asset('css/style.css');            // http://localhost:8000/assets/css/style.css
-echo asset('js/app.js');
-
-// Media/Upload URL
-echo media('profile-pic.jpg');          // http://localhost:8000/uploads/profile-pic.jpg
-
-// Redirect to another page
-redirect('posts/5');                    // Redirects to /posts/5
+url('posts/5');              // http://localhost:8000/posts/5
+asset('css/style.css');      // http://localhost:8000/assets/css/style.css
+media('profile-pic.jpg');    // http://localhost:8000/uploads/profile-pic.jpg
+redirect('posts');           // Redirects to /posts
 ```
+
+### Building API Endpoints
+
+Use `enableCORS()` and `JSONResponse()` inside controllers for API routes. Example from `PostsController`:
+
+```php
+public function index()
+{
+    $this->enableCORS();
+    $this->JSONResponse([
+        ['id' => 1, 'title' => 'First Post'],
+        ['id' => 2, 'title' => 'Second Post']
+    ]);
+}
+```
+
+Allowed origins default to `http://localhost:*`.
 
 ### Language Switching
 
-The language switcher is automatically included in the header. Users can click English or العربية buttons to switch languages. The selection is saved in the session and persists across page visits.
-
-To manually switch language in a controller:
-
-```php
-$_SESSION['lang'] = 'ar'; // or 'en'
-```
+- Header form posts to `/language/switch` with `lang=en|ar` and saves the choice in the session.
+- To switch manually inside code: `$_SESSION['lang'] = 'ar'; // or 'en'`.
 
 ## Database Integration (Optional)
 
@@ -320,10 +315,9 @@ Check generated HTML to verify RTL/LTR and language attributes are correct.
 
 ### Test Routes
 
-Use browser address bar to test routes and parameters:
-
-- `http://localhost:8000/` - Home page
-- `http://localhost:8000/posts/1` - Single post view
+- `http://localhost:8000/` — Home page (uses translations in the view)
+- `http://localhost:8000/posts` — JSON API example (CORS-enabled)
+- `http://localhost:8000/posts/1` — Post detail view (shows route param rendering)
 
 ## Future Enhancements
 

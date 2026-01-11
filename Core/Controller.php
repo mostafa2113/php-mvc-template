@@ -4,6 +4,13 @@ namespace Core;
 
 class Controller
 {
+    protected function JSONResponse($data, $statusCode = 200)
+    {
+        header('Content-Type: application/json');
+        http_response_code($statusCode);
+        echo json_encode($data);
+        exit();
+    }
     protected function render($view, $data = [])
     {
         $content = __DIR__ . '/../App/Views/' . $view . '.php';
@@ -40,5 +47,30 @@ class Controller
         }
         
         return $key;
+    }
+
+    protected function enableCORS()
+    {
+        $allowedOrigins = ['http://localhost:*'];
+        $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+        
+        $isAllowed = false;
+        foreach ($allowedOrigins as $allowed) {
+            if (preg_match('/^'.str_replace('\*', '.*', preg_quote($allowed, '/')).'$/', $origin)) {
+                $isAllowed = true;
+                break;
+            }
+        }
+
+        if ($isAllowed) {
+            header("Access-Control-Allow-Origin: $origin");
+            header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
+            header('Access-Control-Allow-Headers: Content-Type, Authorization');
+            header('Access-Control-Allow-Credentials: true');
+        }
+
+        if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+            exit(0);
+        }
     }
 }

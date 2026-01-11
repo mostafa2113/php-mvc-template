@@ -12,6 +12,7 @@ $router = new Router();
 // Add routes
 $router->add('', ['controller' => 'Home', 'action' => 'index']);
 $router->add('language/switch', ['controller' => 'Language', 'action' => 'switch']);
+$router->add('posts', ['controller' => 'Posts', 'action' => 'index']);
 $router->add('posts/{id}', ['controller' => 'Posts', 'action' => 'view']);
 
 // Dispatch the request

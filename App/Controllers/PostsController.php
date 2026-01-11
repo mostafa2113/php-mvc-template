@@ -10,4 +10,13 @@ class PostsController extends Controller
     {
         $this->render('posts/view', ['id' => $id]);
     }
+
+    public function index()
+    {
+        $this->enableCORS();
+        $this->JSONResponse([
+            ['id' => 1, 'title' => 'First Post'],
+            ['id' => 2, 'title' => 'Second Post']
+        ]);
+    }
 }
