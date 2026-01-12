@@ -42,8 +42,8 @@ A lightweight, flexible PHP MVC framework with built-in multi-language support (
 1. **Clone the repository**:
 
 ```bash
-git clone https://github.com/your-repo/php-mvc-project-template.git
-cd php-mvc-project-template
+git clone https://github.com/mostafa2113/php-mvc-template.git
+cd php-mvc-template
 ```
 
 2. **Install dependencies**:
